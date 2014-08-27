@@ -21,7 +21,8 @@ class Converter
         opts.addToConverted ?= true
         itemIndex = @source.indexOf(substring)
         if itemIndex is -1
-            throw new Error "Could not find #{substring}."
+            throw new Error("Could not find #{substring}.")
+
         splitAt = itemIndex + substring.length
         if opts.addToConverted
             @converted += @source.slice 0, splitAt
@@ -52,52 +53,56 @@ class Converter
 
 
     convertToAlternateSyntax: (sourcecode) -> #, callback) ->
-        @source = sourcecode
-        @converted = ''
-        @requires = []
-        @parameters = []
 
-        # find "define", "("
-        @scrollToMany ['define', '(']
+        try
+            @source = sourcecode
+            @converted = ''
+            @requires = []
+            @parameters = []
 
-        # get require arguments
-        @scrollTo '[',
-            addToConverted: false
-        @requires = @findArrayBeforeSubstring ']',
-            addToConverted: false
+            # find "define", "("
+            @scrollToMany ['define', '(']
 
-        # get the module function parameters
-        @scrollTo [',',  'function'],
-            addToConverted: false
-        @converted += 'function'
+            # get require arguments
+            @scrollTo '[',
+                addToConverted: false
+            @requires = @findArrayBeforeSubstring ']',
+                addToConverted: false
 
-        @scrollTo '('
-        @converted += 'require)'
-        @parameters = @findArrayBeforeSubstring ')',
-            addToConverted: false
+            # get the module function parameters
+            @scrollToMany [',',  'function'],
+                addToConverted: false
+            @converted += 'function'
 
-        @scrollTo ['{', '\n']
+            @scrollTo '('
+            @converted += 'require)'
+            @parameters = @findArrayBeforeSubstring ')',
+                addToConverted: false
 
-        # append module variables and require with new syntax
-        for i in [0...@requires.length]
-            def = '  ,'
-            if i is 0
-                def = 'var'
+            @scrollToMany ['{', '\n']
 
-            req = @requires[i]
-            if i < @parameters.length
-                varname = @parameters[i]
-            else # allow for unnamed requirements, giving them a new name.
-                varname = @requires[i].split('/')
-                varname = varname[varname.length - 1]
+            # append module variables and require with new syntax
+            for i in [0...@requires.length]
+                def = '  ,'
+                if i is 0
+                    def = 'var'
 
-            @converted += "#{def} #{varname} = require(#{req});\n"
+                req = @requires[i]
+                if i < @parameters.length
+                    varname = @parameters[i]
+                else # allow for unnamed requirements, giving them a new name.
+                    varname = @requires[i].split('/')
+                    varname = varname[varname.length - 1]
 
-        # append the rest of the source
-        @converted += "\n"
-        @converted += @source
+                @converted += "#{def} #{varname} = require(#{req});\n"
 
-        return @converted
+            # append the rest of the source
+            @converted += "\n"
+            @converted += @source
 
+            return @converted
+
+        catch error
+            return error
 
 module.exports = Converter

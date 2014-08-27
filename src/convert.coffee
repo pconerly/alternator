@@ -86,6 +86,9 @@ class Converter
                 def = '  ,'
                 if i is 0
                     def = 'var'
+                suffix = ''
+                if i is @requires.length - 1
+                    suffix = ';'
 
                 req = @requires[i]
                 if i < @parameters.length
@@ -94,7 +97,7 @@ class Converter
                     varname = @requires[i].split('/')
                     varname = varname[varname.length - 1]
 
-                @converted += "#{def} #{varname} = require(#{req});\n"
+                @converted += "#{def} #{varname} = require(#{req})#{suffix}\n"
 
             # append the rest of the source
             @converted += "\n"

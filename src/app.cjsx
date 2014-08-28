@@ -22,6 +22,20 @@ Alternator = React.createClass
 
       'pass'
       """
+    badcodeBlock = """
+      define(['jquery', 'underscore', 'backbone', 'common/logger'
+          'plugins/jquery.fileopenbutton', 'plugins/jquery.layoutengine'
+          './viewer_model', './facebook_view', './flickr_view', './dropbox_view'
+          './mycomputer_view', './onedrive_view', 'external_services/models'
+          'icanhaz', 'external_services/onedrive'],
+      ($, _, Backbone, Logger, fileopenbutton, layoutengine, ViewerModel,
+          FacebookView, FlickrView, DropboxView, MyComputerView, OneDriveView, 
+          ServiceModels, ich, OneDrive) ->
+
+          class ViewerMainView extends Backbone.View
+
+              pass: 'pass'
+      """
 
     return {
       badcode: badcodeBlock
@@ -29,6 +43,7 @@ Alternator = React.createClass
       output: ''
       detecting: 'js'
       leading: false
+      coffeeparens: true
     }
 
   onKey: (e) ->
@@ -36,12 +51,18 @@ Alternator = React.createClass
       badcode: e.target.value
     }
 
-  leadTrailChange: (e) ->
-    @setState {
-      leading: e.target.checked
-    }
+  settingsChange: (e) ->
+    stateObj = {}
+    stateObj[e.target.getAttribute('name')] = e.target.checked
+    @setState stateObj
 
   render: () -> 
+    result = c.convertToAlternateSyntax(this.state.badcode, {
+      leadingcommas: this.state.leading
+      coffeeparens: this.state.coffeeparens
+      })
+    goodcode = result.converted
+    detected = result.detected
     <div className="main">
       <h2 className="headline">Convert the requirejs bad syntax into good syntax.</h2>
       <div className="alerts"/>
@@ -52,14 +73,21 @@ Alternator = React.createClass
             value={this.state.badcode}></textarea>
         </div>
         <div className="alt-syntax textarea-container">
-          <textarea className="alt-syntax-textarea textarea" value={c.convertToAlternateSyntax(this.state.badcode, this.state.leading)}></textarea>
+          <textarea className="alt-syntax-textarea textarea" value={goodcode}></textarea>
         </div>
       </div>
       <div className="settings">
         <h3>Settings</h3>
         <div>
-          <label>Leading commas?</label>
-          <input type="checkbox" checked={this.state.leading} onChange={this.leadTrailChange} />
+          <h4>Language Detected: {detected}</h4>
+        </div>
+        <div>
+          <label>Javascript leading commas?</label>
+          <input type="checkbox" name="leading" checked={this.state.leading} onChange={this.settingsChange} />
+        </div>
+        <div>
+          <label>Coffee parens?</label>
+          <input type="checkbox" name="coffeeparens" checked={this.state.coffeeparens} onChange={this.settingsChange} />
         </div>
       </div>
     </div>

@@ -52,13 +52,14 @@ class Converter
         return output
 
 
-    convertToAlternateSyntax: (sourcecode, leadingcommas) -> #, callback) ->
+    convertToAlternateSyntax: (sourcecode, opts) -> #, callback) ->
 
         try
             @source = sourcecode
             @converted = ''
             @requires = []
             @parameters = []
+            @detected = 'js'
 
             # find "define", "("
             @scrollToMany ['define', '(']
@@ -70,29 +71,45 @@ class Converter
                 addToConverted: false
 
             # get the module function parameters
-            @scrollToMany [',',  'function'],
+            @scrollTo ',',
                 addToConverted: false
-            @converted += 'function'
 
-            @scrollTo '('
+            try
+                @scrollTo 'function',
+                    addToConverted: false
+                @converted += 'function'
+            catch
+                @detected = 'coffee'
+
+
+            if @detected is 'js'
+                @scrollTo '('
+            else
+                @scrollTo '(',
+                    addToConverted: false
+                @converted += '('
+
             @converted += 'require)'
             @parameters = @findArrayBeforeSubstring ')',
                 addToConverted: false
 
-            @scrollToMany ['{', '\n']
+            if @detected is 'js'
+                @scrollToMany ['{', '\n']
+            else # if @detected is 'coffee'
+                @scrollToMany ['->', '\n']
 
             # append module variables and require with new syntax
             for i in [0...@requires.length]
                 if i is 0
                     prefix = 'var'
-                else if leadingcommas
+                else if opts.leadingcommas
                     prefix = '  ,'
                 else 
                     prefix = '   '
 
                 if i is @requires.length - 1
                     suffix = ';'
-                else if leadingcommas
+                else if opts.leadingcommas
                     suffix = ''
                 else 
                     suffix = ','
@@ -104,15 +121,27 @@ class Converter
                     varname = @requires[i].split('/')
                     varname = varname[varname.length - 1]
 
-                @converted += "#{prefix} #{varname} = require(#{req})#{suffix}\n"
+                if @detected is 'js'
+                    @converted += "#{prefix} #{varname} = require(#{req})#{suffix}\n"
+                else
+                    if opts.coffeeparens
+                        @converted += "    #{varname} = require(#{req})\n"
+                    else 
+                        @converted += "    #{varname} = require #{req}\n"
 
             # append the rest of the source
             @converted += "\n"
             @converted += @source
 
-            return @converted
+            return {
+                converted: @converted
+                detected: @detected
+            }
 
         catch error
-            return error
+            return {
+                converted: error
+                detected: 'error'
+            }
 
 module.exports = Converter

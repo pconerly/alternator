@@ -52,7 +52,7 @@ class Converter
         return output
 
 
-    convertToAlternateSyntax: (sourcecode) -> #, callback) ->
+    convertToAlternateSyntax: (sourcecode, leadingcommas) -> #, callback) ->
 
         try
             @source = sourcecode
@@ -83,12 +83,19 @@ class Converter
 
             # append module variables and require with new syntax
             for i in [0...@requires.length]
-                def = '  ,'
                 if i is 0
-                    def = 'var'
-                suffix = ''
+                    prefix = 'var'
+                else if leadingcommas
+                    prefix = '  ,'
+                else 
+                    prefix = '   '
+
                 if i is @requires.length - 1
                     suffix = ';'
+                else if leadingcommas
+                    suffix = ''
+                else 
+                    suffix = ','
 
                 req = @requires[i]
                 if i < @parameters.length
@@ -97,7 +104,7 @@ class Converter
                     varname = @requires[i].split('/')
                     varname = varname[varname.length - 1]
 
-                @converted += "#{def} #{varname} = require(#{req})#{suffix}\n"
+                @converted += "#{prefix} #{varname} = require(#{req})#{suffix}\n"
 
             # append the rest of the source
             @converted += "\n"

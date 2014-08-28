@@ -28,11 +28,17 @@ Alternator = React.createClass
       goodcode: ''
       output: ''
       detecting: 'js'
+      leading: false
     }
 
   onKey: (e) ->
     @setState {
       badcode: e.target.value
+    }
+
+  leadTrailChange: (e) ->
+    @setState {
+      leading: e.target.checked
     }
 
   render: () -> 
@@ -46,7 +52,14 @@ Alternator = React.createClass
             value={this.state.badcode}></textarea>
         </div>
         <div className="alt-syntax textarea-container">
-          <textarea className="alt-syntax-textarea textarea" value={c.convertToAlternateSyntax(this.state.badcode)}></textarea>
+          <textarea className="alt-syntax-textarea textarea" value={c.convertToAlternateSyntax(this.state.badcode, this.state.leading)}></textarea>
+        </div>
+      </div>
+      <div className="settings">
+        <h3>Settings</h3>
+        <div>
+          <label>Leading commas?</label>
+          <input type="checkbox" checked={this.state.leading} onChange={this.leadTrailChange} />
         </div>
       </div>
     </div>

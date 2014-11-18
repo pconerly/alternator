@@ -101,17 +101,21 @@ class Converter
             # append module variables and require with new syntax
             for i in [0...@requires.length]
                 if i is 0
+                    prefix = '\nvar'
+                else if opts.multivars
                     prefix = 'var'
-                else if opts.leadingcommas
+                else if opts.leadingcommas && !opts.multivars
                     prefix = '  ,'
-                else 
+                else
                     prefix = '   '
 
                 if i is @requires.length - 1
                     suffix = ';'
+                else if opts.multivars
+                    suffix = ';'
                 else if opts.leadingcommas
                     suffix = ''
-                else 
+                else
                     suffix = ','
 
                 req = @requires[i]
@@ -126,7 +130,7 @@ class Converter
                 else
                     if opts.coffeeparens
                         @converted += "    #{varname} = require(#{req})\n"
-                    else 
+                    else
                         @converted += "    #{varname} = require #{req}\n"
 
             # append the rest of the source

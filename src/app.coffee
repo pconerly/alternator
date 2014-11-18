@@ -5,36 +5,43 @@ Converter = require './convert.coffee'
 c = new Converter()
 
 # TODO
-# detecting coffee or js. 
+# detecting coffee or js.
 # errors.
 # output
 
 Alternator = React.createClass
   getInitialState: () ->
     badcodeBlock = """
-      define(['jquery', 'underscore', 'backbone', 'common/logger', 'common/swfobject', 'ads/slot', './background_picker', 'common/google_analytics',
-              'panels/save/save_panel', 'panels/share/share_panel', 'common/flags', 'common/loading_view',
-              'common/flash_callback_manager', 'accounts/user_model', 'accounts/views', 'common/warning_popups', 'viewer/main_view', 
-              'common/local_storage'],
-      function($, _, Backbone, Logger, swfobject, AdSlot, BackgroundPicker, GA,
-               SavePanel, SharePanel, Flags, LoadingView, FlashCallbackManager, User,
-               AccountViews, WarningPopups, ViewerMainView, LocalStorage) {
+      define([
+          'config',
+          'models/base',
+          'models/decorators/singleton'
+      ], function (
+          config,
+          BaseModel,
+          singleton
+      ) {
+          'use strict';
 
-      'pass'
-      """
-    badcodeBlock = """
-      define(['jquery', 'underscore', 'backbone', 'common/logger'
-          'plugins/jquery.fileopenbutton', 'plugins/jquery.layoutengine'
-          './viewer_model', './facebook_view', './flickr_view', './dropbox_view'
-          './mycomputer_view', './onedrive_view', 'external_services/models'
-          'icanhaz', 'external_services/onedrive'],
-      ($, _, Backbone, Logger, fileopenbutton, layoutengine, ViewerModel,
-          FacebookView, FlickrView, DropboxView, MyComputerView, OneDriveView, 
-          ServiceModels, ich, OneDrive) ->
+          var Model = BaseModel.extend({
 
-          class ViewerMainView extends Backbone.View
+              relations: {
+                  context: 'models/category'
+              },
 
-              pass: 'pass'
+              defaults: {
+
+                  // The current Category context of the application. This has a
+                  // variety of effects throughout Kindling.
+                  context: null
+              }
+          });
+
+          return singleton(Model, {
+              context: config.data('context')
+          });
+      });
+
       """
 
     return {
@@ -42,6 +49,7 @@ Alternator = React.createClass
       goodcode: ''
       output: ''
       detecting: 'js'
+      multivars: true
       leading: false
       coffeeparens: true
     }
@@ -56,19 +64,20 @@ Alternator = React.createClass
     stateObj[e.target.getAttribute('name')] = e.target.checked
     @setState stateObj
 
-  render: () -> 
+  render: () ->
     result = c.convertToAlternateSyntax(this.state.badcode, {
+      multivars: this.state.multivars
       leadingcommas: this.state.leading
       coffeeparens: this.state.coffeeparens
       })
     goodcode = result.converted
     detected = result.detected
     <div className="main">
-      <h2 className="headline">Convert the requirejs bad syntax into good syntax.</h2>
+      <h2 className="headline">Convert RequireJS default syntax into CommonJS compatable</h2>
       <div className="alerts"/>
       <div className="textareas">
         <div className="bad-syntax textarea-container">
-          <textarea className="bad-syntax-textarea textarea" 
+          <textarea className="bad-syntax-textarea textarea"
             onChange={this.onKey}
             value={this.state.badcode}></textarea>
         </div>
@@ -82,8 +91,12 @@ Alternator = React.createClass
           <h4>Language Detected: {detected}</h4>
         </div>
         <div>
+          <label>Multiple vars?</label>
+          <input type="checkbox" name="multivars" checked={this.state.multivars} onChange={this.settingsChange} />
+        </div>
+        <div>
           <label>Javascript leading commas?</label>
-          <input type="checkbox" name="leading" checked={this.state.leading} onChange={this.settingsChange} />
+          <input type="checkbox" name="leading" checked={!this.state.multivars && this.state.leading} onChange={this.settingsChange} />
         </div>
         <div>
           <label>Coffee parens?</label>
